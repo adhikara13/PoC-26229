@@ -1,0 +1,41 @@
+# .github/workflows/build-26229.yml
+name: build-26229
+
+on:
+  workflow_dispatch: {}
+  push:
+    paths:
+      - 'exploit.c'
+      - '.github/workflows/build-26229.yml'
+
+concurrency:
+  group: build-26229-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  win-build:
+    runs-on: windows-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      # Set up MSVC for x64
+      - uses: ilammy/msvc-dev-cmd@v1
+        with:
+          arch: x64
+
+      - name: Compile (x64 Release)
+        shell: pwsh
+        run: |
+          New-Item -ItemType Directory -Force -Path bin | Out-Null
+          cl /O2 /Zi /DUNICODE /D_UNICODE exploit.c /Fe:bin\CVE-2024-26229.exe
+
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: CVE-2024-26229-x64-Release
+          path: |
+            bin\CVE-2024-26229.exe
+            bin\CVE-2024-26229.pdb
+          if-no-files-found: error
+          retention-days: 30
